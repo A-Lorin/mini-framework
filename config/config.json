@@ -1,0 +1,15 @@
+ {
+   "APP_NAME":"Blog Dev",
+   "ENV":"dev",
+   "BASE_DIR":"C:/wamp64/www/mini-framework/",
+   "CONTEXT_PATH":"/mini-framework/",
+   "ROUTES":"config/routes.json",
+   "DATABASE":{
+      "url":"mysql:host=localhost",
+      "username":"root",
+      "password":"",
+      "dbname":"test"
+   },
+   "APP_SECRET":"2ca64f8d*83b*9e@89f5f19d6*7284@1d6bb8",
+   "MAILER_DSN":"#"
+ }
