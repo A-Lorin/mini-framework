@@ -31,7 +31,7 @@ class Kernel{
             }else{
                 throw new Exception("Layout not defined <extends>?</extends>");
             }
-        }catch(AbstractException $e){          
+       }catch(AbstractException $e){
             echo $e->load();
         }
     }

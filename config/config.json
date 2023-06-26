@@ -10,6 +10,7 @@
       "password":"",
       "dbname":"test"
    },
-   "APP_SECRET":"2ca64f8d*83b*9e@89f5f19d6*7284@1d6bb8",
-   "MAILER_DSN":"#"
+    "APP_SECRET":"2ca64f8d*83b*9e@89f5f19d6*7284@1d6bb8",
+    "MAILER_DSN":"#",
+    "DEFAULT_ROUTE": "home"
  }

@@ -1,53 +1,53 @@
 <?php
 namespace Config;
 
-use Vendor\Codingx\ReadFile;
 use Vendor\Codingx\Redirect;
-use Vendor\Codingx\Request;
 use Vendor\Exceptions\NotFoundException;
 use App\Annotation\Route;
 
-class Router{
+class Router
+{
     use Redirect;
 
-    public static function guardian($routes,$page){
-        if(isset($routes[$page][2]) && $routes[$page][2]==="guard"){
-            $user = Session::getInstance()->get("user");
-            if(!$user){
-                Router::redirect("login");
-            }
-        }
-    }
+    public static function route()
+    {
+        // Récupérer toutes les classes dans le namespace des contrôleurs
+        $controllers = glob('Src/Controller/*.php');
+        $page = (isset($_GET["page"])) ? $_GET["page"] : DEFAULT_ROUTE;
 
-    public static function route() {
-        $routes = ReadFile::readJson(ROUTES);
-        $page = (isset($_GET["page"])) ? $_GET["page"] : "";
-        self::guardian($routes, $page);
+        foreach ($controllers as $controller) {
+            $className = 'App\\Controller\\' . basename($controller, '.php');
 
-        foreach ($routes as $path => $route) {
-            if (is_array($route) && count($route) >= 2) {
-                $controllerName = $route[0];
-                $methodName = $route[1];
-                $annotation = self::getMethodAnnotation($controllerName, $methodName);
-                $classAnnotation = self::getClassAnnotation($controllerName);
-                if (
-                    ($annotation !== null && $annotation instanceof Route) &&
-                    ($classAnnotation !== null && $classAnnotation instanceof Route)
-                ) {
+            $reflectionClass = new \ReflectionClass($className);
+            $methods = $reflectionClass->getMethods(\ReflectionMethod::IS_PUBLIC);
+
+            $classAnnotation = self::getClassAnnotation($className);
+
+            foreach ($methods as $method) {
+                $methodName = $method->getName();
+
+                $annotation = self::getMethodAnnotation($method);
+                if ($annotation !== null && $annotation instanceof Route) {
                     $annotationPath = $annotation->path;
-                    $classAnnotationPath =  $classAnnotation->path;
-                    if (trim($annotationPath.$classAnnotationPath, '/') === $page) {
-                        $classBuilder = new ClassBuilder();
-                        $instanceController = $classBuilder->build($controllerName);
-                        return $instanceController->$methodName($_REQUEST);
+                    if($classAnnotation !== null && $classAnnotation instanceof Route)
+                    {
+                        $classAnnotationPath = $classAnnotation->path;
+                        if(trim($classAnnotationPath.$annotationPath, "/") == trim($page, "/")){
+                            $classBuilder = new ClassBuilder();
+                            $instanceController = $classBuilder->build($className);
+
+                            //$instanceController = $reflectionClass->newInstance();
+                            return $instanceController->$methodName($_REQUEST);
+                            // Terminer l'exécution du routeur une fois que la route est trouvée
+                        }
                     }
-                }
-                if ($annotation !== null && $annotation instanceof Route && $classAnnotation == null) {
-                    $annotationPath = $annotation->path;
-                    if (trim($annotationPath, '/') === $page) {
+                    elseif(trim($annotationPath, "/") == trim($page, "/")){
                         $classBuilder = new ClassBuilder();
-                        $instanceController = $classBuilder->build($controllerName);
+                        $instanceController = $classBuilder->build($className);
+
+                        //$instanceController = $reflectionClass->newInstance();
                         return $instanceController->$methodName($_REQUEST);
+                        // Terminer l'exécution du routeur une fois que la route est trouvée
                     }
                 }
             }
@@ -56,10 +56,9 @@ class Router{
         throw new NotFoundException();
     }
 
-    protected static function getMethodAnnotation(string $className, string $methodName) {
-        $reflectionClass = new \ReflectionClass($className);
-        $reflectionMethod = $reflectionClass->getMethod($methodName);
-        $annotations = $reflectionMethod->getAttributes();
+    protected static function getMethodAnnotation(\ReflectionMethod $method)
+    {
+        $annotations = $method->getAttributes(Route::class);
 
         foreach ($annotations as $annotation) {
             $annotationInstance = $annotation->newInstance();
@@ -85,3 +84,4 @@ class Router{
         return null;
     }
 }
+
